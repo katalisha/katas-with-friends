@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+use utf8;
+binmode *STDOUT, ':encoding(utf-8)';
+use Term::ANSIColor;
+use Term::ReadKey;
+use Time::HiRes;
+use Time::Piece ();
+
+my ($TW, $TH);
+my $height;
+my $waist;
+
+sub setsize {
+  ($TW, $TH) = GetTerminalSize();
+
+  $height = $ARGV[0] // $TH - 2;
+  $waist = $height * 2 - 1;
+}
+
+setsize();
+
+my $winks = 0;
+
+$SIG{WINCH} = sub { setsize(); $winks = 40 };
+
+my $clear  = `clear`;
+my $star   = colored(['bright_yellow'], q{⛤});
+
+my @sacred_integers  = qw( 28 29 34 35 40 41 42 43 70 71 76 77 );
+my @profane_integers = qw( 9 11 13 15);
+my @festive_integers = map hex, qw(
+  02660 02725 02731 02732 02733 0273A 0273B 0273C 0273D 02743 02749 0274A
+);
+
+my @natural_integers = map hex, qw(
+ 1070D 1070E 1070F 10710 10711 10712 10713 10714 10715 10716 10717
+);
+
+die "A zero-height terminal indicates that the singularity has come.\n"
+  if $height == 0;
+
+sub xes {
+  my ($n) = @_;
+  my $str = q{};
+  for my $i (1..$n) {
+    if (rand > 0.10) {
+      my $g = $sacred_integers[ rand @sacred_integers ];
+      my $b = chr $natural_integers[ rand @natural_integers] ;
+      $str .= colored([ "ansi$g" ], $b);
+    } else {
+      my $c = $profane_integers[ rand @profane_integers ];
+      my $o = chr $festive_integers[ rand @festive_integers] ;
+      $str .= colored([ "ansi$c", "bold" ], $o);
+    }
+  }
+
+  $str;
+}
+
+DRAW_A_TREE: while (1) {
+  print $clear;
+
+  # wanted to pull in from npm, but no longer available
+  my sub leftpad { print q{ } x int(($TW - $waist) / 2) }
+
+  print "\n" for 1 .. ($TH - $height - 2) / 2;
+
+  if ($height == 1) {
+    leftpad();
+    say "🎄";
+    next;
+  }
+
+  srand $height;
+
+  leftpad();
+
+  print ' ' x (($waist - 1)/2);
+  say $star;
+
+  for (2 .. $height) {
+    my $width = $_ * 2 - 1;
+    leftpad();
+    print ' ' x (($waist - $width)/2);
+    say xes($width);
+  }
+
+  leftpad();
+  print ' ' x (($waist - 1)/2);
+  say colored(["ansi130"], '|');
+
+} continue {
+  until ($winks >= 40) { $winks += Time::HiRes::sleep(0.8) }
+  $winks = 0;
+
+  my $p = Time::Piece->new;
+  if ($p->mon == 12 && $p->day_of_month == 26) {
+    print $clear;
+    say "Happy Boxing Day!";
+    exit 0;
+  }
+}

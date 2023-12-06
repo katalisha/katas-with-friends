@@ -12,11 +12,36 @@ my ($TW, $TH);
 my $height;
 my $waist;
 
+my (undef, $fortytwo) = Time::HiRes::gettimeofday();
+
 sub setsize {
   ($TW, $TH) = GetTerminalSize();
 
   $height = $ARGV[0] // $TH - 2;
   $waist = $height * 2 - 1;
+}
+
+{
+  state %rands;
+  state %next;
+
+  sub reset_rand {
+    delete $next{$_[0]};
+  }
+
+  sub next_rand(;$$) {
+    my ($scale, $ns) = @_;
+    $scale //= 1;
+    $ns //= 1;
+
+    $next{$ns}  //= 0;
+    $rands{$ns} //= [ map {; rand } (1 .. 10_000) ];
+
+    $next{$ns} = ($next{$ns} + 1) % $rands{$ns}->@*;
+    my $n = $rands{$ns}[$next{$ns}];
+
+    return $n * $scale;
+  }
 }
 
 setsize();
@@ -29,7 +54,6 @@ my $clear  = `clear`;
 my $star   = colored(['bright_yellow'], q{⛤});
 
 my @sacred_integers  = qw( 28 29 34 35 40 41 42 43 70 71 76 77 );
-my @profane_integers = qw( 9 11 13 15);
 my @festive_integers = map hex, qw(
   02660 02725 02731 02732 02733 0273A 0273B 0273C 0273D 02743 02749 0274A
 );
@@ -45,13 +69,20 @@ sub xes {
   my ($n) = @_;
   my $str = q{};
   for my $i (1..$n) {
-    if (rand > 0.10) {
-      my $g = $sacred_integers[ rand @sacred_integers ];
-      my $b = chr $natural_integers[ rand @natural_integers] ;
+    if (next_rand > 0.10) {
+      my $g = $sacred_integers[ next_rand @sacred_integers ];
+      my $b = chr $natural_integers[ next_rand @natural_integers] ;
       $str .= colored([ "ansi$g" ], $b);
     } else {
-      my $c = $profane_integers[ rand @profane_integers ];
-      my $o = chr $festive_integers[ rand @festive_integers] ;
+      my (undef, $wtf) = Time::HiRes::gettimeofday();
+
+      my @v = (3,3,3);
+      $v[next_rand 3] = 0;
+      (next_rand(1, 2) > 0.5) && ($v[$_] += 2) for keys @v;
+      my $c = 16;
+      $c += (6 ** $_) * $v[$_] for keys @v;
+
+      my $o = chr $festive_integers[ next_rand @festive_integers] ;
       $str .= colored([ "ansi$c", "bold" ], $o);
     }
   }
@@ -61,6 +92,8 @@ sub xes {
 
 DRAW_A_TREE: while (1) {
   print $clear;
+
+  reset_rand 1;
 
   # wanted to pull in from npm, but no longer available
   my sub leftpad { print q{ } x int(($TW - $waist) / 2) }
@@ -72,8 +105,6 @@ DRAW_A_TREE: while (1) {
     say "🎄";
     next;
   }
-
-  srand $height;
 
   leftpad();
 
@@ -92,8 +123,7 @@ DRAW_A_TREE: while (1) {
   say colored(["ansi130"], '|');
 
 } continue {
-  until ($winks >= 40) { $winks += Time::HiRes::sleep(0.8) }
-  $winks = 0;
+  Time::HiRes::sleep(0.8);
 
   my $p = Time::Piece->new;
   if ($p->mon == 12 && $p->day_of_month == 26) {

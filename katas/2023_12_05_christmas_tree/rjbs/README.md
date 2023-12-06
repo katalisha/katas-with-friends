@@ -12,5 +12,8 @@ Important things to notice:
   as the only argument to the program
 * if you resize the terminal, the tree will redraw nearly immediately
 * single-height trees are special cased using a tree-compression algorithm
-* we use srand to ensure that ornaments are always the same on every
-  same-height tree, meaning that redraws will never move ornaments around
+* We have implemented our own Random Number Generator emulator, which provides
+  an arbitrary number of *cycles* of 10,000 pseudo-random numbers, which can be
+  cycled through like a ring or restarted so that multiple "random" streams of
+  actions can be synchronized or desynchronized.  This is the twinkling system.
+

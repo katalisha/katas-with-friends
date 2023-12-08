@@ -50,3 +50,10 @@ XXXXXXXXXXXXXXXXXXX
 ## 👩🏻‍🎤 Kate adds
 
 Now how about some decorations?
+
+
+## Run the solutions
+```
+docker build -t kata_tree_image .
+docker run -it --rm kata_tree_image ./runall.sh
+```

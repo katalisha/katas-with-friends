@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+use v5.36.0;
+
+# This is my attempt at a balance of simple and compact, written for an
+# intermediate Perl programmer.  It's what I'd put in my ~/bin, but not what
+# I'd put in my workplace repo.
+
+sub encode ($cipher, $code) {
+  my %char = split //, ($code . reverse $code . uc $code . reverse uc $code);
+  join q{}, map {; $char{$_} // $_ } split //, $cipher;
+}
+
+*decode = \&encode;
+
+say encode("ABCD", "agedyropulik");             # GBCE
+say encode("Ala has a cat", "gaderypoluki");    # Gug hgs g cgt
+say decode("Dkucr pu yhr ykbir","politykarenu"); # Dance on the table
+say decode("Hmdr nge brres","regulaminowy");     # Hide our beers

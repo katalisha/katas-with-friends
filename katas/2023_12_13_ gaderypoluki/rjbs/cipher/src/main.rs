@@ -3,7 +3,7 @@ use std::env::args;
 const ASCII_UC_A: u32 = 65;
 const ASCII_LC_A: u32 = 97;
 
-fn cipher_for(secret: &str) -> [Option<char>;26] {
+fn lookup_for(secret: &str) -> [Option<char>;26] {
   let mut map = [ None; 26 ];
 
   let chars: Vec<char> = secret.chars().collect();
@@ -25,12 +25,13 @@ fn cipher_for(secret: &str) -> [Option<char>;26] {
   map
 }
 
-fn apply_cipher(input: &str, cipher: [Option<char>;26]) -> String {
+fn apply_cipher(input: &str, secret: &str) -> String {
+  let lookup = lookup_for(secret);
   let output: String = input.chars().map(|c| {
     match c {
       'A'..='Z' => {
         let n = u32::from(c) - ASCII_UC_A;
-        if let Some(newc) = cipher[n as usize] {
+        if let Some(newc) = lookup[n as usize] {
           newc.to_uppercase().next().unwrap()
         } else {
           c
@@ -38,7 +39,7 @@ fn apply_cipher(input: &str, cipher: [Option<char>;26]) -> String {
       }
       'a'..='z' => {
         let n = u32::from(c) - ASCII_LC_A;
-        if let Some(newc) = cipher[n as usize] { newc } else { c }
+        if let Some(newc) = lookup[n as usize] { newc } else { c }
       }
       _ => c
     }
@@ -49,9 +50,30 @@ fn apply_cipher(input: &str, cipher: [Option<char>;26]) -> String {
 
 fn main() {
   let argv: Vec<String> = args().skip(1).collect();
-  let cipher = cipher_for(&argv[0]);
-  let input  = &argv[1];
-  let output = apply_cipher(input, cipher);
+  let output = apply_cipher(&argv[1], &argv[0]);
 
   println!("output: {}", output);
+}
+
+#[test]
+fn example_tests() {
+  assert_eq!(
+    apply_cipher("ABCD", "agedyropulik"),
+    "GBCE"
+  );
+
+  assert_eq!(
+    apply_cipher("Ala has a cat", "gaderypoluki"),
+    "Gug hgs g cgt",
+  );
+
+  assert_eq!(
+    apply_cipher("Dkucr pu yhr ykbir","politykarenu"),
+    "Dance on the table",
+  );
+
+  assert_eq!(
+    apply_cipher("Hmdr nge brres","regulaminowy"),
+    "Hide our beers"
+  );
 }
